@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  proxy:
+    build: .
+    ports:
+      - "80:80"
+      - "443:443"
+      - "3000:3000"
+    env_file:
+      - .env
+    volumes:
+      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+      - ./dynamic_config:/usr/local/etc/haproxy/dynamic_config:rw
+    command: ["haproxy", "-f", "/usr/local/etc/haproxy/haproxy.cfg", "-f", "/usr/local/etc/haproxy/dynamic_config/", "-W"] 
+    networks:
+      - default
+    restart: unless-stopped
+
+networks:
+  default:
+    driver: bridge

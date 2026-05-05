@@ -1,0 +1,18 @@
+frontend ${DOMAIND_ID}_http
+    bind *:80
+    mode http
+    redirect scheme https code 301 if { hdr(host) -i ${DOMAIN} }
+
+frontend ${DOMAIND_ID}
+    bind *:443
+    mode tcp
+    tcp-request inspect-delay 5s
+    tcp-request content accept if { req_ssl_hello_type 1 }
+
+    use_backend ${DOMAIND_ID}_backend if { req_ssl_sni -i ${DOMAIN} }
+    default_backend ${DOMAIND_ID}_backend
+
+backend ${DOMAIND_ID}_backend
+    mode tcp
+    server app ${ORIGIN_IP}:443
+
