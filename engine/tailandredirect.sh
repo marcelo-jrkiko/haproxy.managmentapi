@@ -1,7 +1,7 @@
 #!/bin/bash
 cd /app/
 
-FILE="/var/log/access_json.log"
+FILE="/var/log/access.log"
 
 until [[ -e "$FILE" ]]; do
   sleep 2

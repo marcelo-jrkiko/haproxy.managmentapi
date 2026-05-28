@@ -13,9 +13,11 @@ class Config:
         
         self.START_LOG_REDIRECTOR = os.getenv('START_LOG_REDIRECTOR', 'false').lower() == 'true'
         
-        self.SSL_CERT_DIR = self.SSL_CERT_DIR.replace('$PWD', os.getcwd())
-        self.TEMPLATE_DIR = self.TEMPLATE_DIR.replace('$PWD', os.getcwd())
-        self.DYNAMIC_CONFIG_DIR = self.DYNAMIC_CONFIG_DIR.replace('$PWD', os.getcwd())
+        # Path relative paths to absolute paths
+        self.DYNAMIC_CONFIG_DIR = os.path.abspath(self.DYNAMIC_CONFIG_DIR)
+        self.SSL_CERT_DIR = os.path.abspath(self.SSL_CERT_DIR)
+        self.TEMPLATE_DIR = os.path.abspath(self.TEMPLATE_DIR)
+        
         
         # Ensure dynamic config directory exists
         os.makedirs(self.DYNAMIC_CONFIG_DIR, exist_ok=True)

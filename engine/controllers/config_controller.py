@@ -5,11 +5,9 @@ from pathlib import Path
 
 from flask import Blueprint, jsonify, request
 
-from engine.helpers.Utils import UtilHelper
-
+from helpers.Utils import UtilHelper
 
 config_blueprint = Blueprint('config_controller', __name__)
-
 
 @config_blueprint.route('/config', methods=['POST'])
 def create_config():
@@ -17,13 +15,13 @@ def create_config():
     if not UtilHelper.validate_token():
         return jsonify({'error': 'Unauthorized'}), 401
 
-    data = request.get_json()
-    if not data:
-        return jsonify({'error': 'Invalid JSON'}), 400
+    multipart_error = UtilHelper.require_multipart_form()
+    if multipart_error:
+        return multipart_error
 
-    domain = data.get('domain', '').strip()
-    origin_ip = data.get('origin_ip', '').strip()
-    template_id = data.get('template_id', 'default').strip()
+    domain = UtilHelper.get_multipart_value('domain')
+    origin_ip = UtilHelper.get_multipart_value('origin_ip')
+    template_id = UtilHelper.get_multipart_value('template_id') or 'default'
 
     if not domain or not origin_ip:
         return jsonify({'error': 'Missing required fields: domain, origin_ip'}), 400
@@ -34,6 +32,7 @@ def create_config():
     app_config = UtilHelper.get_app_config()
     template_path = os.path.join(app_config.TEMPLATE_DIR, f'{template_id}.cfg')
     if not os.path.exists(template_path):
+        logging.error(f'Config template not found: {template_path}')
         return jsonify({'error': f'Config template not found: {template_id}'}), 400
 
     config_template = Path(template_path).read_text()
@@ -47,8 +46,8 @@ def create_config():
     config_content = config_content.replace('${ORIGIN_IP}', origin_ip)
 
     ssl_cert_path = os.path.join(app_config.SSL_CERT_DIR, f'{domain}.pem')
-    ssl_cert = data.get('ssl_cert', '').strip()
-    ssl_key = data.get('ssl_key', '').strip()
+    ssl_cert = UtilHelper.get_multipart_value('ssl_cert')
+    ssl_key = UtilHelper.get_multipart_value('ssl_key')
 
     if ssl_cert and ssl_key:
         try:
@@ -128,12 +127,12 @@ def update_certificate(domain):
     if not domain:
         return jsonify({'error': 'Domain parameter cannot be empty'}), 400
 
-    data = request.get_json()
-    if not data:
-        return jsonify({'error': 'Invalid JSON'}), 400
+    multipart_error = UtilHelper.require_multipart_form()
+    if multipart_error:
+        return multipart_error
 
-    ssl_cert = data.get('ssl_cert', '').strip()
-    ssl_key = data.get('ssl_key', '').strip()
+    ssl_cert = UtilHelper.get_multipart_value('ssl_cert')
+    ssl_key = UtilHelper.get_multipart_value('ssl_key')
     if not ssl_cert or not ssl_key:
         return jsonify({'error': 'Missing required fields: ssl_cert, ssl_key'}), 400
 

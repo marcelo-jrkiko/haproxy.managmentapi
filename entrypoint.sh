@@ -3,6 +3,20 @@ chmod +x tailandredirect.sh
 
 set -e
 
+# Ensure the HAProxy log file exists before rsyslog writes into it.
+touch /var/log/access.log
+
+# Start syslog daemon for HAProxy logs.
+rsyslogd
+
+# Run log rotation periodically inside the container.
+(
+	while true; do
+		logrotate -s /var/lib/logrotate/status /etc/logrotate.conf
+		sleep 86400
+	done
+) &
+
 # first arg is `-f` or `--some-option`
 if [ "${1#-}" != "$1" ]; then
 	set -- haproxy "$@"
