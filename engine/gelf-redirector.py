@@ -204,7 +204,7 @@ def parseAccessLog(log_entry):
     }
 
     if CLIENT == 'from-host':
-        gelf_entry["_client"] = slugify(host.split('.')[0]) if host else "unknown"
+        gelf_entry["_client"] = slugify(host) if host else "unknown"
 
     return gelf_entry
 
