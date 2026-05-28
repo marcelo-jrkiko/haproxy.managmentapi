@@ -2,7 +2,9 @@ import time
 import os
 import socket
 import requests
-import sys 
+import sys
+
+import urllib 
 import urllib3
 import re
 from datetime import datetime
@@ -24,7 +26,7 @@ parser.add_argument('--log_path', type=str, help='Log path to monitor for new lo
 parser.add_argument('--test', type=bool, help='Flags the message as a test')
 parser.add_argument('--logger', type=str, help='Path to a file where the script will log its operations. If not set, logs will only be printed to stdout')
 parser.add_argument('--gelf_http_url', type=str, help='URL of the GELF HTTP endpoint to send log messages to. Can also be set via GELF_HTTP_URL environment variable' )
-parser.add_argument('--gelf_auth_type', type=str, choices=['none', 'header', 'bearer'], default='none', help='Authentication type for GELF HTTP endpoint. Can also be set via GELF_AUTH_TYPE environment variable')
+parser.add_argument('--gelf_auth_type', type=str, choices=['none', 'header', 'bearer'], default=None, help='Authentication type for GELF HTTP endpoint. Can also be set via GELF_AUTH_TYPE environment variable')
 parser.add_argument('--gelf_auth_token', type=str, help='Authentication token for GELF HTTP endpoint. Can also be set via GELF_AUTH_TOKEN environment variable')    
 args = parser.parse_args()
 
@@ -44,6 +46,15 @@ if(args.logger != None and len(args.logger) > 0):
     
 # === Helper Functions ===
 
+def get_gelf_server_hostname():
+    """Extract hostname from GELF_HTTP_URL to prevent infinite logging loops."""
+    try:
+        parsed = urllib.parse.urlparse(GELF_HTTP_URL)
+        return parsed.hostname or parsed.netloc.split(':')[0]
+    except Exception as e:
+        logging.warning(f"Failed to parse GELF_HTTP_URL for hostname extraction: {e}")
+        return None
+    
 def _safe_int(value, default=0):
     try:
         if value in (None, "", "-"):
@@ -203,7 +214,14 @@ def send_to_graylog(message):
     if(gelf_message is None):
         logging.error(f"[ERROR] Failed to parse the log entry: {message}")
         return 
-
+    
+    # Prevent infinite logging loops: ignore logs from the GELF server itself
+    gelf_hostname = get_gelf_server_hostname()
+    log_host = gelf_message.get("host", "")
+    if gelf_hostname and log_host and gelf_hostname.lower() == log_host.lower():
+        logging.info(f"[INFO] Ignoring log from GELF server host '{log_host}' to prevent infinite loop")
+        return 
+    
     try:
         headers = {
             'Content-Type': 'application/json'
