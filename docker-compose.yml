@@ -11,7 +11,8 @@ services:
       - .env
     volumes:
       - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
-      - ./dynamic_config:/usr/local/etc/haproxy/dynamic_config:rw
+      - ./storage/dynamic_config:/usr/local/etc/haproxy/dynamic_config:rw
+      - ./storage/certs:/usr/local/etc/haproxy/certs:rw
     command: ["haproxy", "-f", "/usr/local/etc/haproxy/haproxy.cfg", "-f", "/usr/local/etc/haproxy/dynamic_config/", "-W"] 
     networks:
       - default
