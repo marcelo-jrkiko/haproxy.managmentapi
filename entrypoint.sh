@@ -1,5 +1,5 @@
 #!/bin/sh
-chmod +x tailandredirect.sh
+chmod +x /app/engine/tailandredirect.sh
 
 set -e
 
@@ -7,7 +7,7 @@ set -e
 touch /var/log/access.log
 
 # Start syslog daemon for HAProxy logs.
-rsyslogd
+rsyslogd -f /app/rsyslog-haproxy.conf
 
 # Run log rotation periodically inside the container.
 (
@@ -37,7 +37,7 @@ python engine/app.py &
 # - Starts the log redirector only if env variable is set
 if [ "$START_LOG_REDIRECTOR" = "true" ]; then
 	echo "Starting log redirector..."
-	./tailandredirect.sh &
+	/app/engine/tailandredirect.sh &
 fi 
 
 exec "$@"
