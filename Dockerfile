@@ -19,7 +19,7 @@ RUN curl -fsSL https://pyenv.run | bash && \
         eval "$(pyenv init -)" && \
         pyenv install 3.12.0 && \
         pyenv global 3.12.0 && \
-        python -m pip install --no-cache-dir requests python-dotenv gitpython watchdog dotenv
+        python -m pip install --no-cache-dir requests python-dotenv gitpython watchdog 
 
 WORKDIR /app
 COPY . /app/
@@ -27,7 +27,7 @@ COPY . /app/
 # Install Python dependencies
 RUN eval "$(pyenv init -)" && \
     pyenv global 3.12.0 && \
-    python -m pip install --no-cache-dir -r requirements.txt
+    python -m pip install --no-cache-dir -r engine/requirements.txt
 
 COPY ./entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh

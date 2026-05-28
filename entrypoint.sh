@@ -1,4 +1,6 @@
 #!/bin/sh
+chmod +x tailandredirect.sh
+
 set -e
 
 # first arg is `-f` or `--some-option`
@@ -14,8 +16,14 @@ if [ "$1" = 'haproxy' ]; then
 	set -- haproxy -W -db "$@"
 fi
 
+# - Starts the API
 eval "$(pyenv init -)"
+python engine/app.py &
 
-python app.py &
+# - Starts the log redirector only if env variable is set
+if [ "$START_LOG_REDIRECTOR" = "true" ]; then
+	echo "Starting log redirector..."
+	./tailandredirect.sh &
+fi 
 
 exec "$@"

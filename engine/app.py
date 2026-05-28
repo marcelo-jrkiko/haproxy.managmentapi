@@ -21,10 +21,14 @@ DYNAMIC_CONFIG_DIR = os.getenv('DYNAMIC_CONFIG_DIR', './dynamic_config')
 Path(DYNAMIC_CONFIG_DIR).mkdir(parents=True, exist_ok=True)
 
 # Load template
-TEMPLATE_PATH = 'domain_config.template'
+TEMPLATE_PATH = os.path.join(os.path.dirname(__file__), 'templates', 'domain_config.template')
+
+if not os.path.exists(TEMPLATE_PATH):
+    logging.error(f"Template file not found at {TEMPLATE_PATH}. Exiting.")
+    exit(1)
+
 with open(TEMPLATE_PATH, 'r') as f:
     CONFIG_TEMPLATE = f.read()
-
 
 def generate_domain_id(domain: str) -> str:
     """Generate a sanitized domain ID from domain name."""
