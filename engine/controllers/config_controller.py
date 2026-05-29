@@ -24,9 +24,11 @@ def create_config():
     template_id = UtilHelper.get_multipart_value('template_id') or 'default'
 
     if not domain or not origin_ip:
+        logging.error('Missing required fields: domain, origin_ip')
         return jsonify({'error': 'Missing required fields: domain, origin_ip'}), 400
 
     if not re.match(r'^(\d{1,3}\.){3}\d{1,3}$', origin_ip):
+        logging.error(f'Invalid origin_ip format: {origin_ip}')
         return jsonify({'error': 'Invalid origin_ip format'}), 400
 
     app_config = UtilHelper.get_app_config()
@@ -57,6 +59,7 @@ def create_config():
                 cert_file.write(ssl_key)
             logging.info(f'SSL certificate saved for domain {domain}')
         except Exception as e:
+            logging.error(f'Failed to save SSL certificate for domain {domain}: {str(e)}')
             return jsonify({'error': f'Failed to save SSL certificate: {str(e)}'}), 500
     else:
         ssl_cert_path = os.path.join(app_config.SSL_CERT_DIR, 'default.pem')
