@@ -15,28 +15,7 @@ services:
     networks:
       - default
     restart: unless-stopped
-  roxy-wi:
-    image: registry.roxy-wi.org/roxy-wi 
-    depends_on:
-      - proxy
-    ports:
-      - 8765:8765
-    environment:
-      MYSQL_HOST: roxy-db
-      MYSQL_DATABASE: ${ROXYWI_MYSQL_DATABASE:-roxywi}
-      MYSQL_USER: ${ROXYWI_MYSQL_USER:-roxywi}
-      MYSQL_PASSWORD: ${ROXYWI_MYSQL_PASSWORD:-change_me_user}
-      TZ: ${ROXYWI_TZ:-UTC}
-    networks:
-      - default
-    volumes:
-      - roxywi_data:/var/roxy-wi/lib
-      - ./roxywi-cfg:/etc/roxy-wi
-    restart: unless-stopped
-
+    
 networks:
   default:
     driver: bridge
-
-volumes:
-  roxywi_data:
