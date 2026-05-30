@@ -1,6 +1,7 @@
 #!/bin/bash
 cd /app/
-
+eval "$(pyenv init -)"
+pyenv global 3.12.0 
 FILE="/var/log/access.log"
 
 until [[ -e "$FILE" ]]; do

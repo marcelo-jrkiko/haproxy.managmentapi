@@ -19,7 +19,7 @@ RUN curl -fsSL https://pyenv.run | bash && \
         eval "$(pyenv init -)" && \
         pyenv install 3.12.0 && \
         pyenv global 3.12.0 && \
-        python -m pip install --no-cache-dir requests python-dotenv gitpython watchdog 
+        python -m pip install --no-cache-dir requests python-dotenv gitpython watchdog requests
 
 WORKDIR /app
 COPY . /app/
