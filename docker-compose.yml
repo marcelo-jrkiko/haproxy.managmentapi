@@ -15,27 +15,13 @@ services:
     networks:
       - default
     restart: unless-stopped
-
-  roxy-db:
-    image: mysql:8.0
-    environment:
-      MYSQL_ROOT_PASSWORD: ${ROXYWI_MYSQL_ROOT_PASSWORD:-change_me_root}
-      MYSQL_DATABASE: ${ROXYWI_MYSQL_DATABASE:-roxywi}
-      MYSQL_USER: ${ROXYWI_MYSQL_USER:-roxywi}
-      MYSQL_PASSWORD: ${ROXYWI_MYSQL_PASSWORD:-change_me_user}
-    volumes:
-      - roxywi_data:/var/lib/mysql
-    networks:
-      - default
-    restart: unless-stopped
-
   roxy-wi:
-    image: roxywi/roxy-wi:latest
+    image: registry.roxy-wi.org/roxy-wi 
     depends_on:
       - roxy-db
       - proxy
     ports:
-      - "8080:80"
+      - 8765:8765
     environment:
       MYSQL_HOST: roxy-db
       MYSQL_DATABASE: ${ROXYWI_MYSQL_DATABASE:-roxywi}
@@ -44,6 +30,9 @@ services:
       TZ: ${ROXYWI_TZ:-UTC}
     networks:
       - default
+    volumes:
+      - roxywi_data:/var/roxy-wi/lib
+      - roxywi_cfg:/etc/roxy-wi
     restart: unless-stopped
 
 networks:
