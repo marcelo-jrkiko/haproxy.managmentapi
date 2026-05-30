@@ -31,7 +31,7 @@ services:
       - default
     volumes:
       - roxywi_data:/var/roxy-wi/lib
-      - roxywi_cfg:/etc/roxy-wi
+      - ./roxywi-cfg:/etc/roxy-wi
     restart: unless-stopped
 
 networks:
