@@ -18,7 +18,6 @@ services:
   roxy-wi:
     image: registry.roxy-wi.org/roxy-wi 
     depends_on:
-      - roxy-db
       - proxy
     ports:
       - 8765:8765
