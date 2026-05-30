@@ -4,8 +4,8 @@ services:
   proxy:
     build: .
     ports:
-    #  - "80:80"
-    #  - "443:443"
+      - "80:80"
+      - "443:443"
       - "3000:3000"
     env_file:
       - .env
@@ -18,6 +18,39 @@ services:
       - default
     restart: unless-stopped
 
+  roxy-db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${ROXYWI_MYSQL_ROOT_PASSWORD:-change_me_root}
+      MYSQL_DATABASE: ${ROXYWI_MYSQL_DATABASE:-roxywi}
+      MYSQL_USER: ${ROXYWI_MYSQL_USER:-roxywi}
+      MYSQL_PASSWORD: ${ROXYWI_MYSQL_PASSWORD:-change_me_user}
+    volumes:
+      - roxywi_data:/var/lib/mysql
+    networks:
+      - default
+    restart: unless-stopped
+
+  roxy-wi:
+    image: roxywi/roxy-wi:latest
+    depends_on:
+      - roxy-db
+      - proxy
+    ports:
+      - "8080:80"
+    environment:
+      MYSQL_HOST: roxy-db
+      MYSQL_DATABASE: ${ROXYWI_MYSQL_DATABASE:-roxywi}
+      MYSQL_USER: ${ROXYWI_MYSQL_USER:-roxywi}
+      MYSQL_PASSWORD: ${ROXYWI_MYSQL_PASSWORD:-change_me_user}
+      TZ: ${ROXYWI_TZ:-UTC}
+    networks:
+      - default
+    restart: unless-stopped
+
 networks:
   default:
     driver: bridge
+
+volumes:
+  roxywi_data:
