@@ -12,7 +12,7 @@ logs_bp = Blueprint('logs', __name__, url_prefix='/logs')
 
 @logs_bp.route('/stats', methods=['GET'])
 def get_haproxy_stats():
-    HAPROXY_URL = 'http://localhost:9000/stats;json'
+    HAPROXY_URL = 'http://localhost:9000/haproxy?stats;json'
     
     if not UtilHelper.validate_token():
         return jsonify({'error': 'Unauthorized'}), 401
