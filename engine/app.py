@@ -13,9 +13,13 @@ def create_app() -> Flask:
     app = Flask(__name__)
     app.config['APP_CONFIG'] = config.Config()
 
-    from controllers.config_controller import config_blueprint
-
+    from controllers.logs_controller import logs_bp
+    from controllers.config_controller import config_blueprint   
+    
+    app.register_blueprint(logs_bp)
     app.register_blueprint(config_blueprint)
+    
+    
     return app
 
 

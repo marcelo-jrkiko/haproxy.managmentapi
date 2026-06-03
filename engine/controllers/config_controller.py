@@ -165,9 +165,3 @@ def update_certificate(domain):
         ), 200
     except Exception as e:
         return jsonify({'error': f'Failed to update certificate: {str(e)}'}), 500
-
-
-@config_blueprint.route('/health', methods=['GET'])
-def health_check():
-    """Health check endpoint."""
-    return jsonify({'status': 'ok'}), 200
