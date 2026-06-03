@@ -23,6 +23,8 @@ def get_last_logs():
             lines = log_file.readlines()
             last_lines = lines[-100:]  # Get the last 100 lines
             
+            logging.info(f"Read {len(last_lines)} lines from log file for /logs/last endpoint")
+            
             for line in last_lines:
                 item = utils.parseAccessLog(line)
                 if item:
