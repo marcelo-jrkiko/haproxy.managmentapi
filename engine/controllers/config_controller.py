@@ -71,6 +71,9 @@ def _apply_config_file_content(config_path: str, new_content: str) -> tuple[bool
     if os.path.exists(config_path):
         previous_content = Path(config_path).read_text()
 
+    if new_content and not new_content.endswith('\n'):
+        new_content = f'{new_content}\n'
+
     try:
         with open(config_path, 'w') as config_file:
             config_file.write(new_content)
