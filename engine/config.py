@@ -18,6 +18,7 @@ class Config:
         self.SSL_CERT_DIR = os.path.abspath(self.SSL_CERT_DIR)
         self.TEMPLATE_DIR = os.path.abspath(self.TEMPLATE_DIR)
         
+        self.HAPROXY_CONFIG = os.getenv('HAPROXY_CONFIG', '/usr/local/etc/haproxy/haproxy.cfg')
         
         # Ensure dynamic config directory exists
         os.makedirs(self.DYNAMIC_CONFIG_DIR, exist_ok=True)

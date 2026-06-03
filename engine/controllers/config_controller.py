@@ -6,6 +6,7 @@ from pathlib import Path
 from flask import Blueprint, jsonify, request
 
 from helpers.Utils import UtilHelper
+from helpers.haproxy_config_parser import HAProxyConfigParser
 
 config_blueprint = Blueprint('config_controller', __name__)
 

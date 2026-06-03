@@ -3,10 +3,35 @@
 import logging
 
 from flask import Blueprint, jsonify
+from helpers.haproxy_config_parser import HAProxyConfigParser
 from helpers.Utils import UtilHelper
 import utils
+import requests
 
 logs_bp = Blueprint('logs', __name__, url_prefix='/logs')
+
+@logs_bp.route('/stats', methods=['GET'])
+def get_haproxy_stats():
+    HAPROXY_URL = 'http://localhost:9000/stats;json'
+    
+    if not UtilHelper.validate_token():
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        parser = HAProxyConfigParser(UtilHelper.get_app_config().HAPROXY_CONFIG)
+        authData = parser.extract_stats_auth()
+        
+        if authData is None:
+            logging.error("Stats auth configuration not found in HAProxy config")
+            return jsonify({'error': 'Stats auth configuration not found'}), 500
+        
+        response = requests.get(HAPROXY_URL, auth=(authData['username'], authData['password']), timeout=5)
+        response.raise_for_status()
+        return jsonify(response.json()), 200
+    except Exception as e:
+        logging.error(f"Error fetching HAProxy stats: {e}")
+        return jsonify({'error': 'Failed to fetch HAProxy stats'}), 500
+    
 
 @logs_bp.route('/last', methods=['GET'])
 def get_last_logs():
