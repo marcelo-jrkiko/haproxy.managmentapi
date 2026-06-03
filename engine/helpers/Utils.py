@@ -1,4 +1,5 @@
 import logging
+import os
 import re
 import subprocess
 from typing import Any
@@ -9,6 +10,24 @@ from flask import current_app, jsonify, request
 class UtilHelper:
     """Utility methods shared by config controller routes."""
 
+    @staticmethod
+    def extract_config_metadata(config_content: str) -> dict:
+        domain_matches = re.findall(r'(?:hdr\(host\)|req_ssl_sni)\s+-i\s+([^\s]+)', config_content)
+        origin_ip_matches = re.findall(
+            r'^\s*server\s+\S+\s+([^\s:]+)(?::\d+)?(?:\s|$)',
+            config_content,
+            flags=re.MULTILINE,
+        )
+
+        domains = sorted(set(domain_matches))
+        origin_ips = sorted(set(origin_ip_matches))
+
+        return {
+            'domain': domains[0] if domains else '',
+            'domains': domains,
+            'origin_ip': origin_ips[0] if origin_ips else '',
+            'origin_ips': origin_ips,
+        }
 
     @staticmethod
     def require_multipart_form():

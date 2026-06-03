@@ -3,9 +3,9 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 import logging
 import config
+import Scheduler
 
 logging.basicConfig(level=logging.INFO)
-
 
 def create_app() -> Flask:
     """Create and configure the Flask app instance."""
@@ -26,6 +26,8 @@ def create_app() -> Flask:
     app.register_blueprint(logs_bp)
     app.register_blueprint(config_blueprint)
     
+    scheduler = Scheduler(app)
+    scheduler.start()    
     
     return app
 

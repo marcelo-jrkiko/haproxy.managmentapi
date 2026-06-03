@@ -24,6 +24,12 @@ class Config:
         self.TEMPLATE_DIR = os.path.abspath(self.TEMPLATE_DIR)
         
         self.HAPROXY_CONFIG = os.getenv('HAPROXY_CONFIG', '/usr/local/etc/haproxy/haproxy.cfg')
+        self.CERTBUDDY_INTEGRATION_ENABLED = os.getenv('CERTBUDDY_INTEGRATION_ENABLED', 'false').lower() == 'true'
+        self.CERTBUDDY = {
+            'url': os.getenv('CERTBUDDY_URL', 'https://certbuddy.example.com'),
+            'api_key': os.getenv('CERTBUDDY_API_KEY', ''),
+        }
+        self.RENEW_CERTS_AFTER_DAYS = int(os.getenv('RENEW_CERTS_AFTER_DAYS', 2))
         
         # Ensure dynamic config directory exists
         os.makedirs(self.DYNAMIC_CONFIG_DIR, exist_ok=True)

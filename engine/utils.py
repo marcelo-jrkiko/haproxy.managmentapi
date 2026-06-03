@@ -24,6 +24,16 @@ def _extract_header_value(headers_blob, header_name):
             return item.split(':', 1)[1].strip()
     return None
 
+def is_cert_expiring_soon(expires_at_str, days_threshold):
+    try:
+        expires_at = datetime.fromisoformat(expires_at_str)
+        now = datetime.utcnow()
+        time_to_expiry = expires_at - now
+        return time_to_expiry.total_seconds() < days_threshold * 24 * 3600
+    except Exception as e:
+        logging.getLogger(__name__).error(f"Error parsing certificate expiry date: {e}")
+        return False
+
 def parseAccessLog(log_entry):
     line = log_entry.strip()
 
