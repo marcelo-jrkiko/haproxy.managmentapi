@@ -1,171 +1,251 @@
 # HAProxy Management API
 
-A Flask API for managing HAProxy configuration files dynamically.
+Flask API for managing dynamic HAProxy configuration files.
 
 ## Setup
 
 ### 1. Install Dependencies
+
 ```bash
-pip install -r requirements.txt
+pip install -r engine/requirements.txt
 ```
 
 ### 2. Environment Variables
-The following variables are configured in `.env`:
-- `API_PORT`: Port where the API runs (default: 3000)
-- `API_TOKEN_SECRET`: Token for API authentication
-- `CORS_ORIGINS`: Allowed origin(s) for CORS. Use `*` for all origins, or a comma-separated list like `https://app.example.com,https://admin.example.com`
-- `CORS_SUPPORTS_CREDENTIALS`: Enable credentialed CORS requests (`true`/`false`, default: `false`)
-- `DYNAMIC_CONFIG_DIR`: Directory where config files are stored (default: ./dynamic_config)
+
+Configure these variables in `.env`:
+
+- `API_PORT`: API port (default: `3000`)
+- `API_TOKEN_SECRET`: Bearer token used by all protected endpoints
+- `CORS_ORIGINS`: `*` or comma-separated origins
+- `CORS_SUPPORTS_CREDENTIALS`: `true` or `false`
+- `DYNAMIC_CONFIG_DIR`: Dynamic HAProxy config folder
+- `SSL_CERT_DIR`: SSL certificate folder
+- `TEMPLATE_DIR`: Config template folder
+- `HAPROXY_CONFIG`: Base HAProxy config file path
 
 ### 3. Run the API
+
+From project root:
+
 ```bash
-python app.py
+python engine/app.py
 ```
 
-The API will start on `http://0.0.0.0:3000`
+The API listens on `http://0.0.0.0:3000` by default.
 
-## API Endpoints
+## Authentication
 
-### 1. Create Config File
-**POST** `/config`
+All endpoints require:
 
-Creates a new HAProxy configuration file for a domain.
-
-**Headers:**
-```
+```text
 Authorization: Bearer <API_TOKEN_SECRET>
-Content-Type: application/json
 ```
 
-**Request Body:**
+Unauthorized requests return:
+
 ```json
-{
-    "domain": "example.com",
-    "origin_ip": "192.168.1.100"
-}
+{ "error": "Unauthorized" }
 ```
 
-**Response (201 Created):**
+## Available Endpoints
+
+### 1) Create Config
+
+- **POST** `/config`
+- **Content-Type:** `multipart/form-data`
+- **Fields:**
+    - `domain` (required)
+    - `origin_ip` (required, IPv4 format)
+    - `template_id` (optional, default: `default`)
+    - `ssl_cert` (optional)
+    - `ssl_key` (optional)
+
+Creates `<domain_id>.cfg` in `DYNAMIC_CONFIG_DIR`, validates HAProxy config, and reloads HAProxy. If validation/reload fails, it rolls back the file change.
+
+Success example (`201`):
+
 ```json
 {
     "status": "success",
     "message": "Config created for domain example.com",
-    "domain_id": "example_com",
-    "filename": "example_com.cfg",
-    "path": "./dynamic_config/example_com.cfg"
+    "domain_id": "example_com"
 }
 ```
 
-**Example using curl:**
-```bash
-curl -X POST http://localhost:3000/config \
-  -H "Authorization: Bearer S3x7U9t10u4sCTHsfXjj7Lo0dqGYkTTL" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "domain": "example.com",
-    "origin_ip": "192.168.1.100"
-  }'
-```
+### 2) Delete Config by Domain
 
-### 2. Delete Config File
-**DELETE** `/config/<domain>`
+- **DELETE** `/config/<domain>`
 
-Removes the HAProxy configuration file for a domain.
+Converts `<domain>` to `<domain_id>`, removes the config file, validates, reloads, and rolls back on failure.
 
-**Headers:**
-```
-Authorization: Bearer <API_TOKEN_SECRET>
-```
+Success example (`200`):
 
-**URL Parameter:**
-- `domain`: The domain name (e.g., example.com)
-
-**Response (200 OK):**
 ```json
 {
     "status": "success",
     "message": "Config deleted for domain example.com",
-    "domain_id": "example_com",
-    "filename": "example_com.cfg"
+    "domain_id": "example_com"
 }
 ```
 
-**Example using curl:**
-```bash
-curl -X DELETE http://localhost:3000/config/example.com \
-  -H "Authorization: Bearer S3x7U9t10u4sCTHsfXjj7Lo0dqGYkTTL"
-```
+### 3) Update Certificate by Domain
 
-### 3. Health Check
-**GET** `/health`
+- **PUT** `/config/<domain>/certificate`
+- **Content-Type:** `multipart/form-data`
+- **Fields:**
+    - `ssl_cert` (required)
+    - `ssl_key` (required)
 
-Check if the API is running.
+Updates `<domain>.pem`, validates HAProxy config, and reloads.
 
-**Response (200 OK):**
+Success example (`200`):
+
 ```json
 {
-    "status": "ok"
+    "status": "success",
+    "message": "Certificate updated for domain example.com",
+    "domain_id": "example_com"
 }
 ```
 
-## Features
+### 4) List Configs by DOMAIN_ID
 
-- **Template-based Config Generation**: Uses `domain_config.template` to generate HAProxy configs
-- **Domain ID Generation**: Automatically creates sanitized domain IDs from domain names
-- **Token Authentication**: All endpoints (except /health) require Bearer token authentication
-- **Dynamic Directory**: Config files are stored in the configured `DYNAMIC_CONFIG_DIR`
-- **Input Validation**: Validates domain names and IP addresses
+- **GET** `/configs`
 
-## Config File Naming
+Lists all `.cfg` files under `DYNAMIC_CONFIG_DIR` with parsed domain/origin metadata.
 
-Config files are named based on a sanitized version of the domain:
-- `example.com` → `example_com.cfg`
-- `sub-domain.example.com` → `sub_domain_example_com.cfg`
+Success example (`200`):
+
+```json
+{
+    "total": 1,
+    "configs": [
+        {
+            "domain_id": "example_com",
+            "domain": "example.com",
+            "domains": ["example.com"],
+            "origin_ip": "192.168.1.10",
+            "origin_ips": ["192.168.1.10"]
+        }
+    ]
+}
+```
+
+### 5) Get Config by DOMAIN_ID
+
+- **GET** `/configs/<domain_id>`
+
+Returns raw config content and parsed metadata.
+
+Success example (`200`):
+
+```json
+{
+    "domain_id": "example_com",
+    "domain": "example.com",
+    "origin_ips": ["192.168.1.10"],
+    "content": "frontend example_com ..."
+}
+```
+
+### 6) Update Config by DOMAIN_ID
+
+- **PUT** `/configs/<domain_id>`
+- **Content-Type:** one of:
+    - `application/json` with `{ "config_content": "..." }`
+    - `multipart/form-data` with `config_content`
+    - raw text body
+
+Updates `<domain_id>.cfg`, validates HAProxy config, reloads, and rolls back on failure.
+
+Success example (`200`):
+
+```json
+{
+    "status": "success",
+    "message": "Configuration updated successfully.",
+    "domain_id": "example_com",
+    "domain": "example.com",
+    "origin_ips": ["192.168.1.10"]
+}
+```
+
+### 7) Delete Config by DOMAIN_ID
+
+- **DELETE** `/configs/<domain_id>`
+
+Removes `<domain_id>.cfg` with validate/reload and rollback protection.
+
+Success example (`200`):
+
+```json
+{
+    "status": "success",
+    "message": "Config deleted successfully.",
+    "domain_id": "example_com"
+}
+```
+
+### 8) Validate and Reload HAProxy
+
+- **POST** `/configs/reload`
+
+Validates HAProxy full configuration and reloads only when validation succeeds.
+
+Success example (`200`):
+
+```json
+{
+    "status": "success",
+    "message": "HAProxy configuration validated and reloaded.",
+    "validation_output": "Configuration file is valid"
+}
+```
+
+### 9) Get HAProxy Stats
+
+- **GET** `/logs/stats`
+
+Fetches HAProxy stats from the local stats endpoint using credentials parsed from the configured HAProxy file.
+
+Success (`200`) returns HAProxy stats JSON.
+
+### 10) Get Last Access Logs
+
+- **GET** `/logs/last`
+
+Reads and parses the last 100 lines from `/var/log/access.log`.
+
+Success example (`200`):
+
+```json
+{
+    "logs": [
+        {
+            "timestamp": "...",
+            "client_ip": "..."
+        }
+    ]
+}
+```
 
 ## Error Responses
 
-### 400 Bad Request
+Common error structure:
+
 ```json
-{
-    "error": "Missing required fields: domain, origin_ip"
-}
+{ "error": "<message>" }
 ```
 
-### 401 Unauthorized
-```json
-{
-    "error": "Unauthorized"
-}
-```
+Typical status codes:
 
-### 404 Not Found
-```json
-{
-    "error": "Config file not found for domain example.com"
-}
-```
+- `400` invalid request or HAProxy validation failure
+- `401` missing/invalid token
+- `404` target config file not found
+- `500` internal processing/reload errors
 
-### 500 Internal Server Error
-```json
-{
-    "error": "Failed to write config file: <error details>"
-}
-```
+## Notes
 
-## Generated Config Structure
-
-Generated config files follow this structure:
-```
-frontend <domain_id>
-    bind *:443
-    mode tcp
-    tcp-request inspect-delay 5s
-    tcp-request content accept if { req_ssl_hello_type 1 }
-
-    use_backend <domain_id>_backend if { req_ssl_sni -i <domain> }
-    default_backend <domain_id>_backend
-
-backend <domain_id>_backend
-    mode tcp
-    server app <origin_ip>:443
-```
+- Config files are named `<domain_id>.cfg`.
+- `domain_id` is generated by replacing non-alphanumeric chars with `_`, normalizing repeated underscores, and lowercasing.
+- There is currently no `/health` endpoint.
