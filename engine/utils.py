@@ -32,13 +32,18 @@ def parseAccessLog(log_entry):
     
     syslog_host = None
     body = line
-    syslog_match = re.match(
+    # Accept either classic syslog timestamps (e.g. "Jun  3 13:20:13")
+    # or RFC3339/ISO-8601 timestamps (e.g. "2026-06-03T13:20:13.516934+00:00").
+    syslog_patterns = (
         r'^(?:<\d+>)?\w{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2}\s+(?P<syslog_host>\S+)\s+\S+(?:\[\d+\])?:\s+(?P<body>.*)$',
-        line
+        r'^(?:<\d+>)?\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})\s+(?P<syslog_host>\S+)\s+\S+(?:\[\d+\])?:\s+(?P<body>.*)$'
     )
-    if syslog_match:
-        syslog_host = syslog_match.group('syslog_host')
-        body = syslog_match.group('body')
+    for syslog_pattern in syslog_patterns:
+        syslog_match = re.match(syslog_pattern, line)
+        if syslog_match:
+            syslog_host = syslog_match.group('syslog_host')
+            body = syslog_match.group('body')
+            break
 
     pattern = re.compile(
         r'^(?P<client_ip>\S+):(?P<client_port>\d+)\s+'
