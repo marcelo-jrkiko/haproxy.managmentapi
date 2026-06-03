@@ -1,6 +1,6 @@
 import logging
-import os
 import re
+import subprocess
 from typing import Any
 
 from flask import current_app, jsonify, request
@@ -49,10 +49,53 @@ class UtilHelper:
         return bool(token and token == app_config.API_TOKEN_SECRET)
 
     @staticmethod
-    def reload_haproxy() -> None:
+    def validate_haproxy_config() -> tuple[bool, str]:
+        """Validate HAProxy configuration files before reloading."""
+        app_config = UtilHelper.get_app_config()
+        command = [
+            'haproxy',
+            '-c',
+            '-f',
+            app_config.HAPROXY_CONFIG,
+            '-f',
+            app_config.DYNAMIC_CONFIG_DIR,
+        ]
+
+        try:
+            result = subprocess.run(command, capture_output=True, text=True, check=False)
+        except Exception as error:
+            message = f'Failed to run HAProxy validation: {str(error)}'
+            logging.error(message)
+            return False, message
+
+        output = (result.stdout or result.stderr or '').strip()
+        if result.returncode != 0:
+            message = output or 'HAProxy validation failed.'
+            logging.error(f'HAProxy validation failed: {message}')
+            return False, message
+
+        logging.info('HAProxy configuration validated successfully.')
+        return True, output or 'Configuration is valid.'
+
+    @staticmethod
+    def reload_haproxy() -> tuple[bool, str]:
         """Reload HAProxy to apply new configurations."""
         try:
-            os.system('pkill -USR2 haproxy')
+            result = subprocess.run(
+                ['pkill', '-USR2', 'haproxy'],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            if result.returncode != 0:
+                message = (result.stderr or result.stdout or 'Failed to reload HAProxy.').strip()
+                logging.error(f'Failed to send HAProxy reload signal: {message}')
+                return False, message
+
             logging.info('HAProxy reload signal sent successfully.')
+            return True, 'HAProxy reload signal sent successfully.'
         except Exception as error:
-            logging.error(f'Failed to send HAProxy reload signal: {str(error)}')
+            message = f'Failed to send HAProxy reload signal: {str(error)}'
+            logging.error(message)
+            return False, message
