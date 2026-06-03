@@ -13,6 +13,8 @@ pip install -r requirements.txt
 The following variables are configured in `.env`:
 - `API_PORT`: Port where the API runs (default: 3000)
 - `API_TOKEN_SECRET`: Token for API authentication
+- `CORS_ORIGINS`: Allowed origin(s) for CORS. Use `*` for all origins, or a comma-separated list like `https://app.example.com,https://admin.example.com`
+- `CORS_SUPPORTS_CREDENTIALS`: Enable credentialed CORS requests (`true`/`false`, default: `false`)
 - `DYNAMIC_CONFIG_DIR`: Directory where config files are stored (default: ./dynamic_config)
 
 ### 3. Run the API

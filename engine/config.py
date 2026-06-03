@@ -6,6 +6,11 @@ class Config:
     def __init__(self):
         self.API_PORT = int(os.getenv('API_PORT', 3000))
         self.API_TOKEN_SECRET = os.getenv('API_TOKEN_SECRET')
+        cors_origins = os.getenv('CORS_ORIGINS', '*').strip()
+        self.CORS_ORIGINS = '*'
+        if cors_origins != '*':
+            self.CORS_ORIGINS = [origin.strip() for origin in cors_origins.split(',') if origin.strip()]
+        self.CORS_SUPPORTS_CREDENTIALS = os.getenv('CORS_SUPPORTS_CREDENTIALS', 'false').lower() == 'true'
         
         self.DYNAMIC_CONFIG_DIR = os.getenv('DYNAMIC_CONFIG_DIR', './dynamic_config')
         self.SSL_CERT_DIR = os.getenv('SSL_CERT_DIR', './certs')

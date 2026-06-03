@@ -19,7 +19,7 @@ RUN curl -fsSL https://pyenv.run | bash && \
         eval "$(pyenv init -)" && \
         pyenv install 3.12.0 && \
         pyenv global 3.12.0 && \
-        python -m pip install --no-cache-dir requests python-dotenv gitpython watchdog
+    python -m pip install --no-cache-dir requests python-dotenv gitpython watchdog flask-cors
 
 WORKDIR /app
 COPY . /app/
@@ -32,7 +32,7 @@ RUN cp /app/rsyslog-haproxy.conf /etc/rsyslog.d/49-haproxy.conf && \
 RUN eval "$(pyenv init -)" && \
     pyenv global 3.12.0 && \
     pip install -r engine/requirements.txt && \
-    pip install requests python-dotenv gitpython watchdog
+    pip install requests python-dotenv gitpython watchdog flask-cors
 
 COPY ./entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh

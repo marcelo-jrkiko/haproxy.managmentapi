@@ -1,4 +1,5 @@
 from flask import Flask
+from flask_cors import CORS
 from dotenv import load_dotenv
 import logging
 import config
@@ -12,6 +13,12 @@ def create_app() -> Flask:
 
     app = Flask(__name__)
     app.config['APP_CONFIG'] = config.Config()
+
+    CORS(
+        app,
+        resources={r"/*": {"origins": app.config['APP_CONFIG'].CORS_ORIGINS}},
+        supports_credentials=app.config['APP_CONFIG'].CORS_SUPPORTS_CREDENTIALS,
+    )
 
     from controllers.logs_controller import logs_bp
     from controllers.config_controller import config_blueprint   
