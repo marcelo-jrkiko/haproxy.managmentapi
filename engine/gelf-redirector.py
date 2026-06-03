@@ -58,9 +58,12 @@ def get_gelf_server_hostname():
     
 def parseAccessLog(log_entry):
     line = log_entry.strip()
-    
+
+    gelf_entry = utils.parseAccessLog(line)
+    if gelf_entry is None:
+        return None
+
     host = gelf_entry.get("host")
-    gelf_entry = utils.parseAccessLog(line)    
     gelf_entry["_instance"] = INSTANCE
     gelf_entry["_category"] = "haproxy_httplog"
     gelf_entry["_client"] = CLIENT
