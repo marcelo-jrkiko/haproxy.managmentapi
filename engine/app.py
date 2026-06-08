@@ -3,7 +3,7 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 import logging
 import config
-import Scheduler
+from Scheduler import Scheduler
 
 logging.basicConfig(level=logging.INFO)
 
