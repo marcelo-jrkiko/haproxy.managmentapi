@@ -3,7 +3,7 @@ import logging
 import threading
 import time
 
-from tasks.PullSSLCerts import PullNewSSLCertificatesTask
+from tasks.PullSSLCerts import PullSSLCertsTask
 import schedule
 import utils
 
@@ -14,7 +14,7 @@ class Scheduler:
         
     def _run_pull_new_ssl_certificates(self):    
         try:
-            task = PullNewSSLCertificatesTask()
+            task = PullSSLCertsTask()
             task.run()
         except Exception as e:
             self.logger.error(f"Error running PullNewSSLCertificatesTask: {e}")
